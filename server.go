@@ -25,10 +25,6 @@ package main
 
 import (
 	cmd "github.com/bhojpur/erp/cmd/server"
-
-	_ "github.com/bhojpur/erp/pkg/webui"
-	_ "github.com/lib/pq"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 func main() {

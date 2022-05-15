@@ -25,8 +25,6 @@ package main
 
 import (
 	cmd "github.com/bhojpur/erp/cmd/client"
-
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 func main() {

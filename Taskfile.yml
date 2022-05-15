@@ -1,0 +1,105 @@
+version: "3"
+
+vars:
+  GREETING: Hello, Bhojpur ERP Developer!
+
+tasks:
+    default:
+        cmds:
+        - echo "{{.GREETING}}"
+        silent: true
+
+    build-tools:
+        desc: Build the Enterprise Resource Planning software tools
+        cmds:
+        - GOFLAGS=-mod=mod go build -o bin/erpctl ./client.go 
+        - chmod 755 bin/erpctl
+        - cp bin/erpctl $GOPATH/bin
+        - GOFLAGS=-mod=mod go build -o bin/erpsvr ./server.go 
+        - chmod 755 bin/erpsvr
+        - cp bin/erpsvr $GOPATH/bin
+
+    build-web:
+        desc: Build the web application
+        cmds:
+        - GOFLAGS=-mod=mod go build -o bin/erpctl client.go 
+        - GOFLAGS=-mod=mod go build -o bin/erpsvr server.go 
+        - GOFLAGS=-mod=mod go build -o bin/erpdbg internal/main.go 
+
+    build-desktop:
+        desc: Build the desktop application for current OS
+        cmds:
+        - guiutl package -name "Bhojpur ERP" -os macos -icon internal/bhojpur.png
+        - guiutl package -name "Bhojpur ERP" -os linux -icon internal/bhojpur.png
+        - guiutl package -name "Bhojpur ERP" -os windows -icon internal/bhojpur.png
+
+    package-android:
+        desc: Package the mobile application for Android
+        cmds:
+        - guiutl package -name "Bhojpur ERP" -os android -appID net.bhojpur.erp -icon internal/bhojpur.png
+
+    package-ios:
+        desc: Package the mobile application for iOS
+        cmds:
+        - guiutl package -name "Bhojpur ERP" -os ios -appID net.bhojpur.erp -icon internal/bhojpur.png
+
+    release-macos:
+        desc: Release the native application for macOS App Store
+        cmds:
+        - guiutl release -appID net.bhojpur.erp -appVersion 1.0 -appBuild 1 -category business
+
+    release-android:
+        desc: Release the mobile application for Google Play
+        cmds:
+        - guiutl release -os android -appID net.bhojpur.erp -appVersion 1.0 -appBuild 1
+
+    release-ios:
+        desc: Release the mobile application for iOS App Store
+        cmds:
+        - guiutl release -os ios -appID net.bhojpur.erp -appVersion 1.0 -appBuild 1
+
+    run-web-server:
+        desc: Run the web server application from source code
+        cmds:
+        - GOFLAGS=-mod=mod go run server.go
+ 
+    run-web-client:
+        desc: Run the web client application from source code
+        cmds:
+        - GOFLAGS=-mod=mod go run client.go
+
+    run-mobile:
+        desc: Run the mobile client application on emulator
+        cmds:
+        - GOFLAGS=-mod=mod go run -tags mobile native/main.go
+
+    run-desktop: 
+        desc: Run the desktop application on local host
+        cmds:
+        - GOFLAGS=-mod=mod go run native/main.go
+
+    generate:
+        desc: Generate Go source code from Protocol Buffers
+        cmds:
+        - protoc --proto_path=. --proto_path=$GOPATH/src/googleapis --proto_path=$GOPATH/src/github.com/gogo/protobuf --go_out=./pkg/api --go_opt=module=github.com/bhojpur/erp/pkg/api pkg/api/v1/plan/plan.proto
+        - protoc --proto_path=. --proto_path=$GOPATH/src/googleapis --proto_path=$GOPATH/src/github.com/gogo/protobuf --go-grpc_out=./pkg/api --go-grpc_opt=module=github.com/bhojpur/erp/pkg/api pkg/api/v1/plan/plan.proto
+
+    test:
+        desc: Execute all the Unit Tests
+        cmds:
+        - gotestsum --junitfile test-results/unit-tests.xml -- -short -race -cover -coverprofile test-results/cover.out ./...
+
+    swagger.gen:
+        desc: Generate Go source code
+        cmds:
+        - GOFLAGS=-mod=mod go generate bhojpur.net/erp/internal bhojpur.net/erp/pkg/swagger
+
+    swagger.validate:
+        desc: Validate all the Swagger API specifications
+        cmds:
+        - swagger validate pkg/swagger/swagger.yml
+
+    swagger.doc:
+        desc: Generate documentation for Swagger specified APIs
+        cmds:
+        - docker run -i yousan/swagger-yaml-to-html < pkg/swagger/swagger.yml > doc/index.html

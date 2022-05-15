@@ -32,8 +32,8 @@ var verbose bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "erp",
-	Short: "Bhojpur ERP is an enterprise resource planning system powered by Kubernetes",
+	Use:   "erpsvr",
+	Short: "Bhojpur ERP is an enterprise resource planning system",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if verbose {
 			log.SetLevel(log.DebugLevel)

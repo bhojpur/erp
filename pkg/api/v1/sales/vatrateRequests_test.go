@@ -1,0 +1,493 @@
+package sales
+
+// Copyright (c) 2018 Bhojpur Consulting Private Limited, India. All rights reserved.
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	sharedCommon "github.com/bhojpur/erp/pkg/api/v1/common"
+	"github.com/bhojpur/erp/pkg/internal/common"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestSaveVatRate(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "someclient", r.URL.Query().Get("clientCode"))
+		assert.Equal(t, "somesess", r.URL.Query().Get("sessionKey"))
+		assert.Equal(t, "saveVatRate", r.URL.Query().Get("request"))
+		assert.Equal(t, "ID123", r.URL.Query().Get("vatRateID"))
+		assert.Equal(t, "VatName", r.URL.Query().Get("name"))
+		assert.Equal(t, "0.19", r.URL.Query().Get("rate"))
+		assert.Equal(t, "vatWelcome1234", r.URL.Query().Get("code"))
+
+		resp := SaveVatRateResultResponse{
+			Status:            sharedCommon.Status{ResponseStatus: "ok"},
+			SaveVatRateResult: []SaveVatRateResult{{VatRateID: 999}},
+		}
+		jsonRaw, err := json.Marshal(resp)
+		assert.NoError(t, err)
+
+		_, err = w.Write(jsonRaw)
+		assert.NoError(t, err)
+	}))
+
+	defer srv.Close()
+
+	inpt := map[string]string{
+		"vatRateID": "ID123",
+		"name":      "VatName",
+		"rate":      "0.19",
+		"code":      "vatWelcome1234",
+	}
+
+	cli := common.NewClient("somesess", "someclient", "", nil, nil)
+	cli.Url = srv.URL
+
+	cl := NewClient(cli)
+
+	resp, err := cl.SaveVatRate(context.Background(), inpt)
+	assert.NoError(t, err)
+	if err != nil {
+		return
+	}
+
+	assert.Equal(t, 999, resp.VatRateID)
+}
+
+func TestSaveVatRateBulk(t *testing.T) {
+	bulkRequestWasMade := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bulkRequestWasMade = true
+		statusBulk := sharedCommon.StatusBulk{}
+		statusBulk.ResponseStatus = "ok"
+
+		common.AssertFormValues(t, r, map[string]interface{}{
+			"clientCode": "someclient",
+			"sessionKey": "somesess",
+		})
+
+		common.AssertRequestBulk(t, r, []map[string]interface{}{
+			{
+				"name":        "VatName1",
+				"rate":        "0.19",
+				"code":        "vatWelcome1234",
+				"requestName": "saveVatRate",
+			},
+			{
+				"name":        "VatName2",
+				"rate":        "0.18",
+				"code":        "vatCode124",
+				"requestName": "saveVatRate",
+			},
+		})
+
+		bulkResp := SaveVatRateResponseBulk{
+			Status: sharedCommon.Status{ResponseStatus: "ok"},
+			BulkItems: []SaveVatRateBulkItem{
+				{
+					Status: statusBulk,
+					Records: []SaveVatRateResult{
+						{
+							VatRateID: 999,
+						},
+					},
+				},
+				{
+					Status: statusBulk,
+					Records: []SaveVatRateResult{
+						{
+							VatRateID: 998,
+						},
+					},
+				},
+			},
+		}
+		jsonRaw, err := json.Marshal(bulkResp)
+		assert.NoError(t, err)
+
+		_, err = w.Write(jsonRaw)
+		assert.NoError(t, err)
+	}))
+
+	defer srv.Close()
+
+	inpt := []map[string]interface{}{
+		{
+			"name": "VatName1",
+			"rate": "0.19",
+			"code": "vatWelcome1234",
+		},
+		{
+			"name": "VatName2",
+			"rate": "0.18",
+			"code": "vatCode124",
+		},
+	}
+
+	cli := common.NewClient("somesess", "someclient", "", nil, nil)
+	cli.Url = srv.URL
+
+	cl := NewClient(cli)
+
+	bulkResp, err := cl.SaveVatRateBulk(context.Background(), inpt, map[string]string{})
+	assert.NoError(t, err)
+	if err != nil {
+		return
+	}
+
+	assert.True(t, bulkRequestWasMade)
+
+	assert.Equal(t, sharedCommon.Status{ResponseStatus: "ok"}, bulkResp.Status)
+
+	expectedStatus := sharedCommon.StatusBulk{}
+	expectedStatus.ResponseStatus = "ok"
+
+	assert.Len(t, bulkResp.BulkItems, 2)
+
+	assert.Equal(t, expectedStatus, bulkResp.BulkItems[0].Status)
+	assert.Equal(t, 999, bulkResp.BulkItems[0].Records[0].VatRateID)
+	assert.Equal(t, 998, bulkResp.BulkItems[1].Records[0].VatRateID)
+}
+
+func TestSaveVatRateComponent(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "someclient", r.URL.Query().Get("clientCode"))
+		assert.Equal(t, "somesess", r.URL.Query().Get("sessionKey"))
+		assert.Equal(t, "saveVatRateComponent", r.URL.Query().Get("request"))
+		assert.Equal(t, "ID123", r.URL.Query().Get("vatRateComponentID"))
+		assert.Equal(t, "#2333", r.URL.Query().Get("vatRateID"))
+		assert.Equal(t, "Some name", r.URL.Query().Get("name"))
+		assert.Equal(t, "8.76", r.URL.Query().Get("rate"))
+
+		resp := SaveVatRateComponentResultResponse{
+			Status:                     sharedCommon.Status{ResponseStatus: "ok"},
+			SaveVatRateComponentResult: []SaveVatRateComponentResult{{VatRateComponentID: 999}},
+		}
+		jsonRaw, err := json.Marshal(resp)
+		assert.NoError(t, err)
+
+		_, err = w.Write(jsonRaw)
+		assert.NoError(t, err)
+	}))
+
+	defer srv.Close()
+
+	inpt := map[string]string{
+		"vatRateComponentID": "ID123",
+		"vatRateID":          "#2333",
+		"name":               "Some name",
+		"rate":               "8.76",
+	}
+
+	cli := common.NewClient("somesess", "someclient", "", nil, nil)
+	cli.Url = srv.URL
+
+	cl := NewClient(cli)
+
+	resp, err := cl.SaveVatRateComponent(context.Background(), inpt)
+	assert.NoError(t, err)
+	if err != nil {
+		return
+	}
+
+	assert.Equal(t, 999, resp.VatRateComponentID)
+}
+
+func TestSaveVatRateComponentBulk(t *testing.T) {
+	bulkRequestWasMade := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bulkRequestWasMade = true
+		statusBulk := sharedCommon.StatusBulk{}
+		statusBulk.ResponseStatus = "ok"
+
+		common.AssertFormValues(t, r, map[string]interface{}{
+			"clientCode": "someclient",
+			"sessionKey": "somesess",
+		})
+
+		common.AssertRequestBulk(t, r, []map[string]interface{}{
+			{
+				"vatRateComponentID": "ID123",
+				"vatRateID":          "#2333",
+				"name":               "Some name",
+				"rate":               "8.76",
+				"requestName":        "saveVatRateComponent",
+			},
+			{
+				"vatRateComponentID": "ID124",
+				"vatRateID":          "#2334",
+				"name":               "Some name 2",
+				"rate":               "8.77",
+				"requestName":        "saveVatRateComponent",
+			},
+		})
+
+		bulkResp := SaveVatRateComponentResponseBulk{
+			Status: sharedCommon.Status{ResponseStatus: "ok"},
+			BulkItems: []SaveVatRateComponentBulkItem{
+				{
+					Status: statusBulk,
+					Records: []SaveVatRateComponentResult{
+						{
+							VatRateComponentID: 999,
+						},
+					},
+				},
+				{
+					Status: statusBulk,
+					Records: []SaveVatRateComponentResult{
+						{
+							VatRateComponentID: 998,
+						},
+					},
+				},
+			},
+		}
+		jsonRaw, err := json.Marshal(bulkResp)
+		assert.NoError(t, err)
+
+		_, err = w.Write(jsonRaw)
+		assert.NoError(t, err)
+	}))
+
+	defer srv.Close()
+
+	inpt := []map[string]interface{}{
+		{
+			"vatRateComponentID": "ID123",
+			"vatRateID":          "#2333",
+			"name":               "Some name",
+			"rate":               "8.76",
+		},
+		{
+			"vatRateComponentID": "ID124",
+			"vatRateID":          "#2334",
+			"name":               "Some name 2",
+			"rate":               "8.77",
+		},
+	}
+
+	cli := common.NewClient("somesess", "someclient", "", nil, nil)
+	cli.Url = srv.URL
+
+	cl := NewClient(cli)
+
+	bulkResp, err := cl.SaveVatRateComponentBulk(context.Background(), inpt, map[string]string{})
+	assert.NoError(t, err)
+	if err != nil {
+		return
+	}
+
+	assert.True(t, bulkRequestWasMade)
+
+	assert.Equal(t, sharedCommon.Status{ResponseStatus: "ok"}, bulkResp.Status)
+
+	expectedStatus := sharedCommon.StatusBulk{}
+	expectedStatus.ResponseStatus = "ok"
+
+	assert.Len(t, bulkResp.BulkItems, 2)
+
+	assert.Equal(t, expectedStatus, bulkResp.BulkItems[0].Status)
+	assert.Equal(t, 999, bulkResp.BulkItems[0].Records[0].VatRateComponentID)
+	assert.Equal(t, 998, bulkResp.BulkItems[1].Records[0].VatRateComponentID)
+}
+
+func TestGetVatRatesBulk(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		statusBulk := sharedCommon.StatusBulk{}
+		statusBulk.ResponseStatus = "ok"
+
+		common.AssertFormValues(t, r, map[string]interface{}{
+			"clientCode": "someclient",
+			"sessionKey": "somesess",
+		})
+
+		common.AssertRequestBulk(t, r, []map[string]interface{}{
+			{
+				"requestName": "getVatRates",
+				"id":          "1",
+			},
+			{
+				"requestName": "getVatRates",
+				"id":          "2",
+			},
+			{
+				"requestName": "getVatRates",
+				"id":          "3",
+			},
+		})
+
+		bulkResp := GetVatRatesResponseBulk{
+			Status: sharedCommon.Status{ResponseStatus: "ok"},
+			BulkItems: []GetVatRatesBulkItem{
+				{
+					Status: statusBulk,
+					VatRates: []VatRate{
+						{
+							ID:   "1",
+							Name: "Name 1",
+						},
+					},
+				},
+				{
+					Status: statusBulk,
+					VatRates: []VatRate{
+						{
+							ID:   "2",
+							Name: "Name 2",
+						},
+					},
+				},
+				{
+					Status: statusBulk,
+					VatRates: []VatRate{
+						{
+							ID:   "3",
+							Name: "Name 3",
+						},
+					},
+				},
+			},
+		}
+		jsonRaw, err := json.Marshal(bulkResp)
+		assert.NoError(t, err)
+
+		_, err = w.Write(jsonRaw)
+		assert.NoError(t, err)
+	}))
+
+	defer srv.Close()
+
+	cli := common.NewClient("somesess", "someclient", "", nil, nil)
+	cli.Url = srv.URL
+
+	cl := NewClient(cli)
+
+	bulkResp, err := cl.GetVatRatesBulk(
+		context.Background(),
+		[]map[string]interface{}{
+			{
+				"id": "1",
+			},
+			{
+				"id": "2",
+			},
+			{
+				"id": "3",
+			},
+		},
+		map[string]string{},
+	)
+	assert.NoError(t, err)
+	if err != nil {
+		return
+	}
+
+	assert.Equal(t, sharedCommon.Status{ResponseStatus: "ok"}, bulkResp.Status)
+
+	expectedStatus := sharedCommon.StatusBulk{}
+	expectedStatus.ResponseStatus = "ok"
+
+	assert.Len(t, bulkResp.BulkItems, 3)
+
+	assert.Equal(t, []VatRate{
+		{
+			ID:   "1",
+			Name: "Name 1",
+		},
+	}, bulkResp.BulkItems[0].VatRates)
+
+	assert.Equal(t, expectedStatus, bulkResp.BulkItems[0].Status)
+
+	assert.Equal(t, []VatRate{
+		{
+			ID:   "2",
+			Name: "Name 2",
+		},
+	}, bulkResp.BulkItems[1].VatRates)
+
+	assert.Equal(t, expectedStatus, bulkResp.BulkItems[1].Status)
+
+	assert.Equal(t, []VatRate{
+		{
+			ID:   "3",
+			Name: "Name 3",
+		},
+	}, bulkResp.BulkItems[2].VatRates)
+
+	assert.Equal(t, expectedStatus, bulkResp.BulkItems[2].Status)
+}
+
+func TestGetVatRates(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		statusBulk := sharedCommon.StatusBulk{}
+		statusBulk.ResponseStatus = "ok"
+		resp := GetVatRatesResponse{
+			Status: sharedCommon.Status{ResponseStatus: "ok"},
+			VatRates: VatRates{
+				{
+					ID:   "123",
+					Rate: "100",
+				},
+				{
+					ID:   "1",
+					Rate: "10",
+				},
+			},
+		}
+		jsonRaw, err := json.Marshal(resp)
+		assert.NoError(t, err)
+
+		_, err = w.Write(jsonRaw)
+		assert.NoError(t, err)
+	}))
+
+	defer srv.Close()
+
+	cli := common.NewClient("somesess", "someclient", "", nil, nil)
+	cli.Url = srv.URL
+
+	cl := NewClient(cli)
+
+	actualVatRateItems, err := cl.GetVatRates(
+		context.Background(),
+		map[string]string{},
+	)
+	assert.NoError(t, err)
+	if err != nil {
+		return
+	}
+
+	assert.Equal(t, VatRates{
+		{
+			ID:   "123",
+			Rate: "100",
+		},
+		{
+			ID:   "1",
+			Rate: "10",
+		},
+	}, actualVatRateItems)
+}

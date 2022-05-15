@@ -1,0 +1,406 @@
+package customer
+
+// Copyright (c) 2018 Bhojpur Consulting Private Limited, India. All rights reserved.
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+import (
+	"encoding/json"
+
+	sharedCommon "github.com/bhojpur/erp/pkg/api/v1/common"
+)
+
+type (
+	Customer struct {
+		ID                      int                         `json:"id"`
+		PayerID                 int                         `json:"payerID,omitempty"`
+		CustomerID              int                         `json:"customerID"`
+		TypeID                  string                      `json:"type_id"`
+		FullName                string                      `json:"fullName"`
+		CompanyName             string                      `json:"companyName"`
+		FirstName               string                      `json:"firstName"`
+		LastName                string                      `json:"lastName"`
+		GroupID                 int                         `json:"groupID"`
+		EDI                     string                      `json:"EDI"`
+		GLN                     string                      `json:"GLN"`
+		IsPOSDefaultCustomer    int                         `json:"isPOSDefaultCustomer"`
+		CountryID               string                      `json:"countryID"`
+		Phone                   string                      `json:"phone"`
+		EInvoiceEmail           string                      `json:"eInvoiceEmail"`
+		Email                   string                      `json:"email"`
+		Fax                     string                      `json:"fax"`
+		Code                    string                      `json:"code"`
+		ReferenceNumber         string                      `json:"referenceNumber"`
+		VatNumber               string                      `json:"vatNumber"`
+		BankName                string                      `json:"bankName"`
+		BankAccountNumber       string                      `json:"bankAccountNumber"`
+		BankIBAN                string                      `json:"bankIBAN"`
+		BankSWIFT               string                      `json:"bankSWIFT"`
+		PaymentDays             int                         `json:"paymentDays"`
+		Notes                   string                      `json:"notes"`
+		LastModified            int                         `json:"lastModified"`
+		CustomerType            string                      `json:"customerType"`
+		Address                 string                      `json:"address"`
+		CustomerAddresses       sharedCommon.Addresses      `json:"addresses"`
+		Street                  string                      `json:"street"`
+		Address2                string                      `json:"address2"`
+		City                    string                      `json:"city"`
+		PostalCode              string                      `json:"postalCode"`
+		Country                 string                      `json:"country"`
+		State                   string                      `json:"state"`
+		ContactPersons          ContactPersons              `json:"contactPersons"`
+		Attributes              []sharedCommon.ObjAttribute `json:"attributes"`
+		Credit                  int                         `json:"credit"`
+		CompanyTypeID           int                         `json:"companyTypeID"`
+		PersonTitleID           int                         `json:"personTitleID"`
+		EmailEnabled            int                         `json:"emailEnabled"`
+		MailEnabled             int                         `json:"mailEnabled"`
+		EInvoiceEnabled         int                         `json:"eInvoiceEnabled"`
+		FlagStatus              int                         `json:"flagStatus"`
+		OperatorIdentifier      string                      `json:"operatorIdentifier"`
+		Gender                  string                      `json:"gender"`
+		GroupName               string                      `json:"groupName"`
+		Mobile                  string                      `json:"mobile"`
+		Birthday                string                      `json:"birthday"`
+		IntegrationCode         string                      `json:"integrationCode"`
+		ColorStatus             string                      `json:"colorStatus"`
+		FactoringContractNumber string                      `json:"factoringContractNumber"`
+		Image                   string                      `json:"image"`
+		TwitterID               string                      `json:"twitterID"`
+		FacebookName            string                      `json:"facebookName"`
+		CreditCardLastNumbers   string                      `json:"creditCardLastNumbers"`
+		IndiaCustomerType       string                      `json:"indiaCustomerType"`
+		CustomerCardNumber      string                      `json:"customerCardNumber"`
+		LastModifierUsername    string                      `json:"lastModifierUsername"`
+		DefaultAssociationName  string                      `json:"defaultAssociationName"`
+		DefaultProfessionalName string                      `json:"defaultProfessionalName"`
+		TaxExempt               int                         `json:"taxExempt"`
+		PaysViaFactoring        int                         `json:"paysViaFactoring"`
+		SalesBlocked            int                         `json:"salesBlocked"`
+		RewardPointsDisabled    int                         `json:"rewardPointsDisabled"`
+		CustomerBalanceDisabled int                         `json:"customerBalanceDisabled"`
+		PosCouponsDisabled      int                         `json:"posCouponsDisabled"`
+		EmailOptOut             int                         `json:"emailOptOut"`
+		ShipGoodsWithWaybills   int                         `json:"shipGoodsWithWaybills"`
+		DefaultAssociationID    int                         `json:"defaultAssociationID"`
+		DefaultProfessionalID   int                         `json:"defaultProfessionalID"`
+
+		// Web-shop related fields
+		Username  string `json:"webshopUsername"`
+		LastLogin string `json:"webshopLastLogin"`
+
+		// Detailed info
+		PriceListID  int `json:"priceListID"`
+		PriceListID2 int `json:"priceListID2"`
+		PriceListID3 int `json:"priceListID3"`
+	}
+
+	CompanyType struct {
+		ID           int    `json:"id"`
+		Name         string `json:"name"`
+		Order        int    `json:"order"`
+		Added        int    `json:"added"`
+		LastModified int    `json:"lastModified"`
+	}
+	GetCompanyTypesResponse struct {
+		Status       sharedCommon.Status `json:"status"`
+		CompanyTypes []CompanyType       `json:"records"`
+	}
+
+	SaveCustomerResp struct {
+		CustomerID    int  `json:"customerID"`
+		AlreadyExists bool `json:"alreadyExists"`
+	}
+
+	SaveCustomerResponseBulkItem struct {
+		Status  sharedCommon.StatusBulk `json:"status"`
+		Records []SaveCustomerResp      `json:"records"`
+	}
+
+	SaveCustomerResponseBulk struct {
+		Status    sharedCommon.Status            `json:"status"`
+		BulkItems []SaveCustomerResponseBulkItem `json:"requests"`
+	}
+
+	DeleteCustomerResponse struct {
+		Status sharedCommon.Status `json:"status"`
+	}
+
+	DeleteCustomerResponseBulkItem struct {
+		Status sharedCommon.StatusBulk `json:"status"`
+	}
+
+	DeleteCustomersResponseBulk struct {
+		Status    sharedCommon.Status              `json:"status"`
+		BulkItems []DeleteCustomerResponseBulkItem `json:"requests"`
+	}
+
+	ContactPersons []ContactPerson
+	ContactPerson  struct {
+		ContactPersonID   int    `json:"contactPersonID"`
+		FullName          string `json:"fullName"`
+		GroupName         string `json:"groupName"`
+		CountryID         string `json:"countryID"`
+		Phone             string `json:"phone"`
+		Email             string `json:"email"`
+		Fax               string `json:"fax"`
+		Code              string `json:"code"`
+		BankName          string `json:"bankName"`
+		BankAccountNumber string `json:"bankAccountNumber"`
+		BankIBAN          string `json:"bankIBAN"`
+		BankSWIFT         string `json:"bankSWIFT"`
+		Notes             string `json:"notes"`
+	}
+	Customers []Customer
+
+	//Attribute field
+	Attribute struct {
+		Name  string `json:"attributeNam"`
+		Type  string `json:"attributeType"`
+		Value string `json:"attributeValue"`
+	}
+
+	CustomerRequest struct {
+		CustomerID        int
+		CompanyName       string
+		Address           string
+		PostalCode        string
+		AddressTypeID     int
+		City              string
+		State             string
+		Country           string
+		FirstName         string
+		LastName          string
+		FullName          string
+		RegistryCode      string
+		VatNumber         string
+		Email             string
+		Phone             string
+		BankName          string
+		BankAccountNumber string
+
+		// Web-shop related fields
+		Username string
+		Password string
+	}
+
+	WebshopClient struct {
+		ClientID        string `json:"clientID"`
+		ClientUsername  string `json:"clientUsername"`
+		ClientName      string `json:"clientName"`
+		ClientFirstName string `json:"clientFirstName"`
+		ClientLastName  string `json:"clientLastName"`
+		ClientGroupID   string `json:"clientGroupID"`
+		ClientGroupName string `json:"clientGroupName"`
+		CompanyID       string `json:"companyID"`
+		CompanyName     string `json:"companyName"`
+	}
+	GetCustomersResponse struct {
+		Status    sharedCommon.Status `json:"status"`
+		Customers Customers           `json:"records"`
+	}
+
+	GetCustomerGroupsResponse struct {
+		Status    sharedCommon.Status `json:"status"`
+		Customers []CustomerGroup     `json:"records"`
+	}
+
+	CustomerGroup struct {
+		Added           int    `json:"added"`
+		ClientGroupID   int    `json:"clientGroupID"`
+		CustomerGroupID int    `json:"customerGroupID"`
+		LastModified    int    `json:"lastModified"`
+		Name            string `json:"name"`
+		ParentID        int    `json:"parentID"`
+		PricelistID     int    `json:"pricelistID"`
+		PricelistID2    int    `json:"pricelistID2"`
+		PricelistID3    int    `json:"pricelistID3"`
+		PricelistID4    int    `json:"pricelistID4"`
+		PricelistID5    int    `json:"pricelistID5"`
+	}
+
+	GetCustomerBalanceResponse struct {
+		Status  sharedCommon.Status `json:"status"`
+		Records []CustomerBalance   `json:"records"`
+	}
+
+	CustomerBalance struct {
+		CustomerID      int         `json:"customerID"`
+		ActualBalance   json.Number `json:"actualBalance"`
+		CreditLimit     int         `json:"creditLimit"`
+		AvailableCredit json.Number `json:"availableCredit"`
+		CreditAllowed   int         `json:"creditAllowed"`
+	}
+
+	PostCustomerResponse struct {
+		Status                sharedCommon.Status   `json:"status"`
+		CustomerImportReports CustomerImportReports `json:"records"`
+	}
+
+	SaveCompanyTypeResponse struct {
+		Status  sharedCommon.Status     `json:"status"`
+		Records []SaveCompanyTypeRecord `json:"records"`
+	}
+	SaveCompanyTypeRecord struct {
+		CompanyTypeID int `json:"companyTypeID"`
+	}
+
+	SaveSupplierGroupResponse struct {
+		Status  sharedCommon.Status       `json:"status"`
+		Records []SaveSupplierGroupRecord `json:"records"`
+	}
+
+	SaveSupplierGroupRecord struct {
+		SupplierGroupID int `json:"supplierGroupID"`
+	}
+
+	CustomerImportReports []CustomerImportReport
+	CustomerImportReport  struct {
+		ClientID   int `json:"clientID"`
+		CustomerID int `json:"customerID"`
+	}
+
+	GetCustomersResponseBulkItem struct {
+		Status    sharedCommon.StatusBulk `json:"status"`
+		Customers Customers               `json:"records"`
+	}
+
+	GetCustomersResponseBulk struct {
+		Status    sharedCommon.Status            `json:"status"`
+		BulkItems []GetCustomersResponseBulkItem `json:"requests"`
+	}
+)
+
+func (r GetCompanyTypesResponse) GetStatus() *sharedCommon.Status {
+	return &r.Status
+}
+
+type (
+	Supplier struct {
+		SupplierId      uint                        `json:"supplierID"`
+		SupplierType    string                      `json:"supplierType"`
+		FullName        string                      `json:"fullName"`
+		CompanyName     string                      `json:"companyName"`
+		FirstName       string                      `json:"firstName"`
+		LstName         string                      `json:"lastName"`
+		GroupId         uint                        `json:"groupID"`
+		GroupName       string                      `json:"groupName"`
+		Phone           string                      `json:"phone"`
+		Mobile          string                      `json:"mobile"`
+		Email           string                      `json:"email"`
+		Fax             string                      `json:"fax"`
+		Code            string                      `json:"code"`
+		IntegrationCode string                      `json:"integrationCode"`
+		VatrateID       uint                        `json:"vatrateID"`
+		CurrencyCode    string                      `json:"currencyCode"`
+		DeliveryTermsID uint                        `json:"deliveryTermsID"`
+		CountryId       uint                        `json:"countryID"`
+		CountryName     string                      `json:"countryName"`
+		CountryCode     string                      `json:"countryCode"`
+		Address         string                      `json:"address"`
+		Gln             string                      `json:"GLN"`
+		Attributes      []sharedCommon.ObjAttribute `json:"attributes"`
+
+		// Detail fields
+		VatNumber           string `json:"vatNumber"`
+		Skype               string `json:"skype"`
+		Website             string `json:"website"`
+		BankName            string `json:"bankName"`
+		BankAccountNumber   string `json:"bankAccountNumber"`
+		BankIBAN            string `json:"bankIBAN"`
+		BankSWIFT           string `json:"bankSWIFT"`
+		Birthday            string `json:"birthday"`
+		CompanyID           uint   `json:"companyID"`
+		ParentCompanyName   string `json:"parentCompanyName"`
+		SupplierManagerID   uint   `json:"supplierManagerID"`
+		SupplierManagerName string `json:"supplierManagerName"`
+		PaymentDays         uint   `json:"paymentDays"`
+		Notes               string `json:"notes"`
+		LastModified        string `json:"lastModified"`
+		Added               uint64 `json:"added"`
+	}
+
+	//SaveSupplierResp
+	SaveSupplierResp struct {
+		SupplierID    int  `json:"supplierID"`
+		AlreadyExists bool `json:"alreadyExists"`
+	}
+
+	//GetSuppliersResponse
+	GetSuppliersResponse struct {
+		Status    sharedCommon.Status `json:"status"`
+		Suppliers []Supplier          `json:"records"`
+	}
+
+	GetSuppliersResponseBulkItem struct {
+		Status    sharedCommon.StatusBulk `json:"status"`
+		Suppliers []Supplier              `json:"records"`
+	}
+
+	GetSuppliersResponseBulk struct {
+		Status    sharedCommon.Status            `json:"status"`
+		BulkItems []GetSuppliersResponseBulkItem `json:"requests"`
+	}
+
+	SaveSuppliersResponseBulkItem struct {
+		Status  sharedCommon.StatusBulk `json:"status"`
+		Records []SaveSupplierResp      `json:"records"`
+	}
+
+	SaveSuppliersResponseBulk struct {
+		Status    sharedCommon.Status             `json:"status"`
+		BulkItems []SaveSuppliersResponseBulkItem `json:"requests"`
+	}
+
+	DeleteSupplierResponse struct {
+		Status sharedCommon.Status `json:"status"`
+	}
+
+	DeleteSuppliersResponseBulkItem struct {
+		Status sharedCommon.StatusBulk `json:"status"`
+	}
+
+	DeleteSuppliersResponseBulk struct {
+		Status    sharedCommon.Status               `json:"status"`
+		BulkItems []DeleteSuppliersResponseBulkItem `json:"requests"`
+	}
+
+	AddCustomerRewardPointsResult struct {
+		TransactionID   int64 `json:"transactionID"`
+		CustomerID      int64 `json:"customerID"`
+		Points          int64 `json:"points"`
+		CreatedUnixTime int64 `json:"createdUnixTime"`
+		ExpiryUnixTime  int64 `json:"expiryUnixTime"`
+	}
+
+	AddCustomerRewardPointsResponse struct {
+		Status                         sharedCommon.Status             `json:"status"`
+		AddCustomerRewardPointsResults []AddCustomerRewardPointsResult `json:"records"`
+	}
+
+	AddCustomerRewardPointsResponseBulkItem struct {
+		Status                         sharedCommon.StatusBulk         `json:"status"`
+		AddCustomerRewardPointsResults []AddCustomerRewardPointsResult `json:"records"`
+	}
+
+	AddCustomerRewardPointsResponseBulk struct {
+		Status    sharedCommon.Status                       `json:"status"`
+		BulkItems []AddCustomerRewardPointsResponseBulkItem `json:"requests"`
+	}
+)

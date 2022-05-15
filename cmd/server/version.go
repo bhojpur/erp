@@ -21,7 +21,9 @@ package cmd
 // THE SOFTWARE.
 
 import (
-	"github.com/bhojpur/erp/pkg/version"
+	"fmt"
+
+	stamping "github.com/bhojpur/erp/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +32,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Prints the version of this Bhojpur ERP executable binary image",
 	Run: func(cmd *cobra.Command, args []string) {
-		version.Print()
+		fmt.Println("erpsvr "+stamping.FullVersion())
 	},
 }
 

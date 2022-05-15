@@ -1,2 +1,5 @@
 # Bhojpur ERP - Enterprise Resource Planning
-The Bhojpur ERP is a software-as-a-service product used for Enterprise Resource Planning  based on Bhojpur.NET Platform for application delivery.
+
+The `Bhojpur ERP` is a digital enterprise resource planning system applied within
+the [Bhojpur.NET Platform](https://github.com/bhojpur/platform/) ecosystem for
+delivery of distributed `applications` or `services`.
